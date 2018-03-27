@@ -24,7 +24,8 @@ struct resultQueue {
 };
 
 struct request {
-  // TODO
+  char keyword[MAX_KEYWORD];
+  int index;
 };
 
 struct requestQueue {
@@ -34,7 +35,6 @@ struct requestQueue {
 };
 
 struct sharedData {
-  int number;
   struct resultQueue result_queues[N];
   struct requestQueue request_queue;
 };
@@ -69,11 +69,6 @@ int main(int argc, char **argv) {
 
   close(fd);
 
-  printf("Test 1\n");
-  shared_data = (struct sharedData *) sptr;
-  printf("Test 2\n");
-  int anumber = shared_data->number;
-  printf("Test 3\n");
 
   printf("%d\n", anumber);
 }

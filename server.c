@@ -24,7 +24,8 @@ struct resultQueue {
 };
 
 struct request {
-  // TODO
+  char keyword[MAX_KEYWORD];
+  int index;
 };
 
 struct requestQueue {
@@ -34,8 +35,8 @@ struct requestQueue {
 };
 
 struct sharedData {
-  int number;
   struct resultQueue result_queues[N];
+  int resultQueueStatus[N];
   struct requestQueue request_queue;
 };
 
@@ -67,16 +68,14 @@ int main(int argc, char **argv) {
   ftruncate(fd, SHM_SIZE);
   fstat(fd, &sbuf);
   shm_start = mmap(NULL, sbuf.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  printf("Test 1\n");
+
   close(fd);
-  printf("Test 2\n");
 
   shared_data = (struct sharedData *) shm_start;
-  printf("Test 3\n");
-  shared_data->number = 23;
-  printf("Test 4\n");
 
-  //shm_unlink(shm_name);
+  for (int i = 0; i < N; i++) {
+    shared_data->resultQueueStatus[i] = 0;
+  }
 
   exit(0);
 }
