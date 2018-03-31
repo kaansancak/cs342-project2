@@ -31,10 +31,11 @@ struct request {
 struct requestQueue {
   int in;
   int out;
-  struct request requests[];
+  struct request requests[BUFFER_SIZE];
 };
 
 struct sharedData {
+  int number;
   struct resultQueue result_queues[N];
   int resultQueueStatus[N];
   struct requestQueue request_queue;
@@ -68,14 +69,24 @@ int main(int argc, char **argv) {
   ftruncate(fd, SHM_SIZE);
   fstat(fd, &sbuf);
   shm_start = mmap(NULL, sbuf.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-
+  printf("Test 1\n");
   close(fd);
+  printf("Test 2\n");
 
   shared_data = (struct sharedData *) shm_start;
+  printf("Test 3\n");
+  shared_data->number = 23;
+  printf("Test 4\n");
 
-  for (int i = 0; i < N; i++) {
-    shared_data->resultQueueStatus[i] = 0;
+  while (1) {
+    if (shared_data->request_queue.in != shared_data->request_queue.out) {
+      struct request req = shared_data->request_queue.requests[shared_data->request_queue.out];
+      shared_data->request_queue.out = (shared_data->request_queue.out + 1) % BUFFER_SIZE;
+
+      printf("%d", req.index);
+    }
   }
+  //shm_unlink(shm_name);
 
-  exit(0);
+exit(0);
 }

@@ -31,11 +31,13 @@ struct request {
 struct requestQueue {
   int in;
   int out;
-  struct request requests[];
+  struct request requests[BUFFER_SIZE];
 };
 
 struct sharedData {
+  int number;
   struct resultQueue result_queues[N];
+  int resultQueueStatus[N];
   struct requestQueue request_queue;
 };
 
@@ -69,6 +71,28 @@ int main(int argc, char **argv) {
 
   close(fd);
 
+  printf("Test 1\n");
+  shared_data = (struct sharedData *) sptr;
+  printf("Test 2\n");
+  int anumber = shared_data->number;
+  printf("Test 3\n");
 
   printf("%d\n", anumber);
+
+  int index = -1;
+  for (int i = 0; i < N; i++) {
+    if (shared_data->resultQueueStatus[i] == 0) {
+      index = i;
+      shared_data->resultQueueStatus[i] = 1;
+      break;
+    }
+  }
+  printf("Test2");
+
+  if (index == -1) {
+    return 0;
+  }
+
+  printf("Found empty queue at index %d: ", index);
+  struct request req;
 }
