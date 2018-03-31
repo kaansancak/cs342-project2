@@ -35,7 +35,6 @@ struct requestQueue {
 };
 
 struct sharedData {
-  int number;
   struct resultQueue result_queues[N];
   int resultQueueStatus[N];
   struct requestQueue request_queue;
@@ -71,14 +70,7 @@ int main(int argc, char **argv) {
 
   close(fd);
 
-  printf("Test 1\n");
   shared_data = (struct sharedData *) sptr;
-  printf("Test 2\n");
-  int anumber = shared_data->number;
-  printf("Test 3\n");
-
-  printf("%d\n", anumber);
-
   int index = -1;
   for (int i = 0; i < N; i++) {
     if (shared_data->resultQueueStatus[i] == 0) {
@@ -87,12 +79,21 @@ int main(int argc, char **argv) {
       break;
     }
   }
-  printf("Test2");
 
   if (index == -1) {
-    return 0;
+    perror("too many clients started");
+    exit(1);
   }
 
-  printf("Found empty queue at index %d: ", index);
+  printf("Found empty queue at index: %d\n", index);
+
   struct request req;
+  req.index = index;
+  strcpy(req.keyword, keyword);
+
+  shared_data->request_queue.requests[shared_data->request_queue.in] = req;
+  shared_data->request_queue.in = (shared_data->request_queue.in + 1) % BUFFER_SIZE;
+  printf("Request sent\n");
+
+
 }
