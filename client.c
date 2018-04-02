@@ -21,6 +21,9 @@ sem_t* result_queue_empty_array[N];
 sem_t* status_mutex;
 sem_t* status_full;
 sem_t* status_empty;
+sem_t* request_queue_mutex;
+sem_t* request_queue_full;
+sem_t* request_queue_empty;
 
 void initSemaphores() {
   for (int i = 0; i < N; i++) {
@@ -54,8 +57,8 @@ void initSemaphores() {
   char SEMNAME_STATUS_FULL[MAX_SHM_NAME];
   char SEMNAME_STATUS_EMPTY[MAX_SHM_NAME];
   sprintf(SEMNAME_STATUS_MUTEX, "%s%s", sem_prefix, "status_mutex");
-  sprintf(SEMNAME_STATUS_FULL, "%s%s", sem_prefix, "result_queue_full");
-  sprintf(SEMNAME_STATUS_EMPTY, "%s%s", sem_prefix, "result_queue_empty");
+  sprintf(SEMNAME_STATUS_FULL, "%s%s", sem_prefix, "status_full");
+  sprintf(SEMNAME_STATUS_EMPTY, "%s%s", sem_prefix, "status_empty");
 
   status_mutex = sem_open(SEMNAME_STATUS_MUTEX, O_RDWR);
   if (status_mutex < 0) {
@@ -71,6 +74,31 @@ void initSemaphores() {
 
   status_empty = sem_open(SEMNAME_STATUS_EMPTY, O_RDWR);
   if (status_empty < 0) {
+    perror("can not create semaphore\n");
+    exit (1);
+  }
+
+  char SEMNAME_REQUEST_MUTEX[MAX_SHM_NAME];
+  char SEMNAME_REQUEST_FULL[MAX_SHM_NAME];
+  char SEMNAME_REQUEST_EMPTY[MAX_SHM_NAME];
+  sprintf(SEMNAME_REQUEST_MUTEX, "%s%s", sem_prefix, "request_mutex");
+  sprintf(SEMNAME_REQUEST_FULL, "%s%s", sem_prefix, "request_queue_full");
+  sprintf(SEMNAME_REQUEST_EMPTY, "%s%s", sem_prefix, "request_queue_empty");
+
+  request_queue_mutex = sem_open(SEMNAME_REQUEST_MUTEX, O_RDWR);
+  if (request_queue_mutex < 0) {
+    perror("can not create semaphore\n");
+    exit (1);
+  }
+
+  request_queue_full = sem_open(SEMNAME_REQUEST_FULL, O_RDWR);
+  if (request_queue_full < 0) {
+    perror("can not create semaphore\n");
+    exit (1);
+  }
+
+  request_queue_empty = sem_open(SEMNAME_REQUEST_EMPTY, O_RDWR);
+  if (request_queue_empty < 0) {
     perror("can not create semaphore\n");
     exit (1);
   }
@@ -149,5 +177,10 @@ int main(int argc, char **argv) {
   // CLEAN UP
   shared_data->result_queues[index].in = 0;
   shared_data->result_queues[index].out = 0;
+
+  sem_wait(status_full);
+  sem_wait(status_mutex);
   shared_data->resultQueueStatus[index] = 0;
+  sem_post(status_mutex);
+  sem_post(status_empty);
 }
