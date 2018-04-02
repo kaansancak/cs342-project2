@@ -99,18 +99,27 @@ void *handleRequest(void *arg){
     exit(1);
   }
 
+
   while( (read = getline( &line, &len, fp)) != -1){
     if(strstr(line, keyword) != NULL) {
+      sem_wait(result_queue_empty_array[req->index]);
+      sem_wait(result_queue_mutex_array[req->index]);
       shared_data->result_queues[req->index].buffer[shared_data->result_queues[req->index].in] = lineno;
       shared_data->result_queues[req->index].in = (shared_data->result_queues[req->index].in + 1) % BUFFER_SIZE;
+      sem_post(result_queue_mutex_array[req->index]);
+      sem_post(result_queue_full_array[req->index]);
     }
     lineno++;
   }
 
   fclose(fp);
 
+  sem_wait(result_queue_empty_array[req->index]);
+  sem_wait(result_queue_mutex_array[req->index]);
   shared_data->result_queues[req->index].buffer[shared_data->result_queues[req->index].in] = -1;
   shared_data->result_queues[req->index].in = (shared_data->result_queues[req->index].in + 1) % BUFFER_SIZE;
+  sem_post(result_queue_mutex_array[req->index]);
+  sem_post(result_queue_full_array[req->index]);
 
   if(line) {
     free(line);
@@ -160,8 +169,9 @@ int main(int argc, char **argv) {
 
     // Queue is not empty, take the request and create a new thread to handle
     if (shared_data->request_queue.in != shared_data->request_queue.out) {
-
       // Take the request from request queue
+
+      // TODO SEMAPHORE
       struct request req = shared_data->request_queue.requests[shared_data->request_queue.out];
       shared_data->request_queue.out = (shared_data->request_queue.out + 1) % BUFFER_SIZE;
 

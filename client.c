@@ -31,19 +31,19 @@ void initSemaphores() {
     sprintf(SEMNAME_FULL, "%s%s%d", sem_prefix, "result_queue_full_", i);
     sprintf(SEMNAME_EMPTY, "%s%s%d", sem_prefix, "result_queue_empty_", i);
 
-    result_queue_mutex_array[i] = sem_open(SEMNAME_MUTEX, O_RDWR | O_CREAT, 0660, 1);
+    result_queue_mutex_array[i] = sem_open(SEMNAME_MUTEX, O_RDWR);
     if (result_queue_mutex_array[i] < 0) {
       perror("can not create semaphore\n");
       exit (1);
     }
 
-    result_queue_full_array[i] = sem_open(SEMNAME_FULL, O_RDWR | O_CREAT, 0660, 0);
+    result_queue_full_array[i] = sem_open(SEMNAME_FULL, O_RDWR);
     if (result_queue_full_array[i] < 0) {
       perror("can not create semaphore\n");
       exit (1);
     }
 
-    result_queue_empty_array[i] = sem_open(SEMNAME_EMPTY, O_RDWR | O_CREAT, 0660, BUFFER_SIZE);
+    result_queue_empty_array[i] = sem_open(SEMNAME_EMPTY, O_RDWR);
     if (result_queue_empty_array[i] < 0) {
       perror("can not create semaphore\n");
       exit (1);
@@ -57,19 +57,19 @@ void initSemaphores() {
   sprintf(SEMNAME_STATUS_FULL, "%s%s", sem_prefix, "result_queue_full");
   sprintf(SEMNAME_STATUS_EMPTY, "%s%s", sem_prefix, "result_queue_empty");
 
-  status_mutex = sem_open(SEMNAME_STATUS_MUTEX, O_RDWR | O_CREAT, 0660, 1);
+  status_mutex = sem_open(SEMNAME_STATUS_MUTEX, O_RDWR);
   if (status_mutex < 0) {
     perror("can not create semaphore\n");
     exit (1);
   }
 
-  status_full = sem_open(SEMNAME_STATUS_FULL, O_RDWR | O_CREAT, 0660, 0);
+  status_full = sem_open(SEMNAME_STATUS_FULL, O_RDWR);
   if (status_full < 0) {
     perror("can not create semaphore\n");
     exit (1);
   }
 
-  status_empty = sem_open(SEMNAME_STATUS_EMPTY, O_RDWR | O_CREAT, 0660, BUFFER_SIZE);
+  status_empty = sem_open(SEMNAME_STATUS_EMPTY, O_RDWR);
   if (status_empty < 0) {
     perror("can not create semaphore\n");
     exit (1);
@@ -99,8 +99,13 @@ int main(int argc, char **argv) {
   close(fd);
   shared_data = (struct sharedData *) sptr;
 
+  initSemaphores();
+
   // Find an empty index in the result queues
   int index = -1;
+
+  sem_wait(status_empty);
+  sem_wait(status_mutex);
   for (int i = 0; i < N; i++) {
     if (shared_data->resultQueueStatus[i] == 0) {
       index = i;
@@ -108,6 +113,8 @@ int main(int argc, char **argv) {
       break;
     }
   }
+  sem_post(status_mutex);
+  sem_post(status_full);
 
   if (index == -1) {
     printf("too many clients started");
@@ -118,17 +125,19 @@ int main(int argc, char **argv) {
   req.index = index;
   strcpy(req.keyword, keyword);
 
+  // TODO SEMAPHORE HERE
   shared_data->request_queue.requests[shared_data->request_queue.in] = req;
   shared_data->request_queue.in = (shared_data->request_queue.in + 1) % BUFFER_SIZE;
-  printf("Request sent\n");
 
-  sleep(2);
 
   while (1) {
-
     if(shared_data->result_queues[index].in != shared_data->result_queues[index].out) {
+      sem_wait(result_queue_full_array[index]);
+      sem_wait(result_queue_mutex_array[index]);
       int lineNo = shared_data->result_queues[index].buffer[shared_data->result_queues[index].out];
       shared_data->result_queues[index].out = (shared_data->result_queues[index].out + 1) % BUFFER_SIZE;
+      sem_post(result_queue_mutex_array[index]);
+      sem_post(result_queue_empty_array[index]);
 
       if (lineNo == -1)
         break;
@@ -137,4 +146,8 @@ int main(int argc, char **argv) {
     }
   }
 
+  // CLEAN UP
+  shared_data->result_queues[index].in = 0;
+  shared_data->result_queues[index].out = 0;
+  shared_data->resultQueueStatus[index] = 0;
 }
