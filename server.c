@@ -8,12 +8,75 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "utils.h"
 
 char shm_name[MAX_SHM_NAME];
 char input_file_name[MAX_FILENAME];
 char sem_prefix[MAX_SEM_PREFIX];
 struct sharedData *shared_data;
+
+// SEMAPHORES
+sem_t* result_queue_mutex_array[N];
+sem_t* result_queue_full_array[N];
+sem_t* result_queue_empty_array[N];
+sem_t* status_mutex;
+sem_t* status_full;
+sem_t* status_empty;
+
+void initSemaphores() {
+  for (int i = 0; i < N; i++) {
+    char SEMNAME_MUTEX[MAX_SHM_NAME];
+    char SEMNAME_FULL[MAX_SHM_NAME];
+    char SEMNAME_EMPTY[MAX_SHM_NAME];
+    sprintf(SEMNAME_MUTEX, "%s%s%d", sem_prefix, "result_queue_mutex_", i);
+    sprintf(SEMNAME_FULL, "%s%s%d", sem_prefix, "result_queue_full_", i);
+    sprintf(SEMNAME_EMPTY, "%s%s%d", sem_prefix, "result_queue_empty_", i);
+
+    result_queue_mutex_array[i] = sem_open(SEMNAME_MUTEX, O_RDWR | O_CREAT, 0660, 1);
+    if (result_queue_mutex_array[i] < 0) {
+      perror("can not create semaphore\n");
+      exit (1);
+    }
+
+    result_queue_full_array[i] = sem_open(SEMNAME_FULL, O_RDWR | O_CREAT, 0660, 0);
+    if (result_queue_full_array[i] < 0) {
+      perror("can not create semaphore\n");
+      exit (1);
+    }
+
+    result_queue_empty_array[i] = sem_open(SEMNAME_EMPTY, O_RDWR | O_CREAT, 0660, BUFFER_SIZE);
+    if (result_queue_empty_array[i] < 0) {
+      perror("can not create semaphore\n");
+      exit (1);
+    }
+  }
+
+  char SEMNAME_STATUS_MUTEX[MAX_SHM_NAME];
+  char SEMNAME_STATUS_FULL[MAX_SHM_NAME];
+  char SEMNAME_STATUS_EMPTY[MAX_SHM_NAME];
+  sprintf(SEMNAME_STATUS_MUTEX, "%s%s", sem_prefix, "status_mutex");
+  sprintf(SEMNAME_STATUS_FULL, "%s%s", sem_prefix, "result_queue_full");
+  sprintf(SEMNAME_STATUS_EMPTY, "%s%s", sem_prefix, "result_queue_empty");
+
+  status_mutex = sem_open(SEMNAME_STATUS_MUTEX, O_RDWR | O_CREAT, 0660, 1);
+  if (status_mutex < 0) {
+    perror("can not create semaphore\n");
+    exit (1);
+  }
+
+  status_full = sem_open(SEMNAME_STATUS_FULL, O_RDWR | O_CREAT, 0660, 0);
+  if (status_full < 0) {
+    perror("can not create semaphore\n");
+    exit (1);
+  }
+
+  status_empty = sem_open(SEMNAME_STATUS_EMPTY, O_RDWR | O_CREAT, 0660, BUFFER_SIZE);
+  if (status_empty < 0) {
+    perror("can not create semaphore\n");
+    exit (1);
+  }
+}
 
 void *handleRequest(void *arg){
   struct request *req;
@@ -73,6 +136,10 @@ int main(int argc, char **argv) {
   strcpy(input_file_name, argv[2]);
   strcpy(sem_prefix, argv[3]);
 
+  // Clean up the shared memory before starting
+  shm_unlink(shm_name);
+
+  // Open new shared memory
   fd = shm_open(shm_name, O_RDWR | O_CREAT, 0660);
   ftruncate(fd, SHM_SIZE);
   fstat(fd, &sbuf);
@@ -85,6 +152,8 @@ int main(int argc, char **argv) {
   for (int i = 0; i < N; i++) {
     shared_data->resultQueueStatus[i] = 0;
   }
+
+  initSemaphores();
 
   int ret;
   while (1) {
