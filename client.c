@@ -153,9 +153,12 @@ int main(int argc, char **argv) {
   req.index = index;
   strcpy(req.keyword, keyword);
 
-  // TODO SEMAPHORE HERE
+  sem_wait(request_queue_empty);
+  sem_wait(request_queue_mutex);
   shared_data->request_queue.requests[shared_data->request_queue.in] = req;
   shared_data->request_queue.in = (shared_data->request_queue.in + 1) % BUFFER_SIZE;
+  sem_post(request_queue_mutex);
+  sem_post(request_queue_full);
 
 
   while (1) {

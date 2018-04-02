@@ -87,19 +87,19 @@ void initSemaphores() {
   sprintf(SEMNAME_REQUEST_FULL, "%s%s", sem_prefix, "request_queue_full");
   sprintf(SEMNAME_REQUEST_EMPTY, "%s%s", sem_prefix, "request_queue_empty");
 
-  request_queue_mutex = sem_open(SEMNAME_REQUEST_MUTEX, O_RDWR);
+  request_queue_mutex = sem_open(SEMNAME_REQUEST_MUTEX, O_RDWR | O_CREAT, 0660, 1);
   if (request_queue_mutex < 0) {
     perror("can not create semaphore\n");
     exit (1);
   }
 
-  request_queue_full = sem_open(SEMNAME_REQUEST_FULL, O_RDWR);
+  request_queue_full = sem_open(SEMNAME_REQUEST_FULL, O_RDWR | O_CREAT, 0660, 0);
   if (request_queue_full < 0) {
     perror("can not create semaphore\n");
     exit (1);
   }
 
-  request_queue_empty = sem_open(SEMNAME_REQUEST_EMPTY, O_RDWR);
+  request_queue_empty = sem_open(SEMNAME_REQUEST_EMPTY, O_RDWR | O_CREAT, 0660, BUFFER_SIZE);
   if (request_queue_empty < 0) {
     perror("can not create semaphore\n");
     exit (1);
@@ -199,9 +199,12 @@ int main(int argc, char **argv) {
     if (shared_data->request_queue.in != shared_data->request_queue.out) {
       // Take the request from request queue
 
-      // TODO SEMAPHORE
+      sem_wait(request_queue_full);
+      sem_wait(request_queue_mutex);
       struct request req = shared_data->request_queue.requests[shared_data->request_queue.out];
       shared_data->request_queue.out = (shared_data->request_queue.out + 1) % BUFFER_SIZE;
+      sem_post(request_queue_mutex);
+      sem_post(request_queue_empty);
 
       // Create a new thread to handle the request
       t_args[req.index] = req;

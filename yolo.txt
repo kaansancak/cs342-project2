@@ -1,0 +1,155 @@
+For the first parameter, you need to provide
+the destination buffer itself.
+The destination buffer must be a char array
+buffer. E.g.: char buffer[1024];
+
+Make sure that the first parameter has
+enough space to store
+what you're trying to copy into it.
+If available to you, it is safer to use functions
+like: strcpy_s and strcat_s
+where you explicitly have
+to specify the size of the
+destination buffer.
+
+Note: A string literal cannot be used
+ as a buffer, since it
+is a constant. Thus, you always have to
+allocate a char array for the buffer.
+
+The return value of strcat can
+simply be ignored, it merely
+returns the same pointer as was passed in as the first argument.
+It is there for convenience,
+and allows you to chain
+the calls into one line of code:
+
+For the first parameter, you need to provide
+the destination buffer itself.
+The destination buffer must be a char array
+buffer. E.g.: char buffer[1024];
+
+Make sure that the first parameter has
+enough space to store
+what you're trying to copy into it.
+If available to you, it is safer to use functions
+like: strcpy_s and strcat_s
+where you explicitly have
+to specify the size of the
+destination buffer.
+
+Note: A string literal cannot be used
+ as a buffer, since it
+is a constant. Thus, you always have to
+allocate a char array for the buffer.
+
+The return value of strcat can
+simply be ignored, it merely
+returns the same pointer as was passed in as the first argument.
+It is there for convenience,
+and allows you to chain
+the calls into one line of code:
+
+For the first parameter, you need to provide
+the destination buffer itself.
+The destination buffer must be a char array
+buffer. E.g.: char buffer[1024];
+
+Make sure that the first parameter has
+enough space to store
+what you're trying to copy into it.
+If available to you, it is safer to use functions
+like: strcpy_s and strcat_s
+where you explicitly have
+to specify the size of the
+destination buffer.
+
+Note: A string literal cannot be used
+ as a buffer, since it
+is a constant. Thus, you always have to
+allocate a char array for the buffer.
+
+The return value of strcat can
+simply be ignored, it merely
+returns the same pointer as was passed in as the first argument.
+It is there for convenience,
+and allows you to chain
+the calls into one line of code:
+
+For the first parameter, you need to provide
+the destination buffer itself.
+The destination buffer must be a char array
+buffer. E.g.: char buffer[1024];
+
+Make sure that the first parameter has
+enough space to store
+what you're trying to copy into it.
+If available to you, it is safer to use functions
+like: strcpy_s and strcat_s
+where you explicitly have
+to specify the size of the
+destination buffer.
+
+Note: A string literal cannot be used
+ as a buffer, since it
+is a constant. Thus, you always have to
+allocate a char array for the buffer.
+
+The return value of strcat can
+simply be ignored, it merely
+returns the same pointer as was passed in as the first argument.
+It is there for convenience,
+and allows you to chain
+the calls into one line of code:
+
+For the first parameter, you need to provide
+the destination buffer itself.
+The destination buffer must be a char array
+buffer. E.g.: char buffer[1024];
+
+Make sure that the first parameter has
+enough space to store
+what you're trying to copy into it.
+If available to you, it is safer to use functions
+like: strcpy_s and strcat_s
+where you explicitly have
+to specify the size of the
+destination buffer.
+
+Note: A string literal cannot be used
+ as a buffer, since it
+is a constant. Thus, you always have to
+allocate a char array for the buffer.
+
+The return value of strcat can
+simply be ignored, it merely
+returns the same pointer as was passed in as the first argument.
+It is there for convenience,
+and allows you to chain
+the calls into one line of code:
+
+For the first parameter, you need to provide
+the destination buffer itself.
+The destination buffer must be a char array
+buffer. E.g.: char buffer[1024];
+
+Make sure that the first parameter has
+enough space to store
+what you're trying to copy into it.
+If available to you, it is safer to use functions
+like: strcpy_s and strcat_s
+where you explicitly have
+to specify the size of the
+destination buffer.
+
+Note: A string literal cannot be used
+ as a buffer, since it
+is a constant. Thus, you always have to
+allocate a char array for the buffer.
+
+The return value of strcat can
+simply be ignored, it merely
+returns the same pointer as was passed in as the first argument.
+It is there for convenience,
+and allows you to chain
+the calls into one line of code:
