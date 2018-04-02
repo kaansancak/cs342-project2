@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include "utils.h"
+#include <signal.h>
 
 char shm_name[MAX_SHM_NAME];
 char input_file_name[MAX_FILENAME];
@@ -17,6 +18,18 @@ char sem_prefix[MAX_SEM_PREFIX];
 struct sharedData *shared_data;
 
 // SEMAPHORES
+char SEMNAME_MUTEX[MAX_SHM_NAME];
+char SEMNAME_FULL[MAX_SHM_NAME];
+char SEMNAME_EMPTY[MAX_SHM_NAME];
+
+char SEMNAME_STATUS_MUTEX[MAX_SHM_NAME];
+char SEMNAME_STATUS_FULL[MAX_SHM_NAME];
+char SEMNAME_STATUS_EMPTY[MAX_SHM_NAME];
+
+char SEMNAME_REQUEST_MUTEX[MAX_SHM_NAME];
+char SEMNAME_REQUEST_FULL[MAX_SHM_NAME];
+char SEMNAME_REQUEST_EMPTY[MAX_SHM_NAME];
+
 sem_t* result_queue_mutex_array[N];
 sem_t* result_queue_full_array[N];
 sem_t* result_queue_empty_array[N];
@@ -27,11 +40,47 @@ sem_t* request_queue_mutex;
 sem_t* request_queue_full;
 sem_t* request_queue_empty;
 
+static void cleanUp() {
+  for (int i = 0; i < N; i++) {
+    sem_close(result_queue_mutex_array[i]);
+    sem_close(result_queue_full_array[i]);
+    sem_close(result_queue_empty_array[i]);
+
+    sprintf(SEMNAME_MUTEX, "%s%s%d", sem_prefix, "result_queue_mutex_", i);
+    sprintf(SEMNAME_FULL, "%s%s%d", sem_prefix, "result_queue_full_", i);
+    sprintf(SEMNAME_EMPTY, "%s%s%d", sem_prefix, "result_queue_empty_", i);
+
+    sem_unlink(SEMNAME_MUTEX);
+    sem_unlink(SEMNAME_FULL);
+    sem_unlink(SEMNAME_EMPTY);
+  }
+
+  sem_close(status_mutex);
+  sem_close(status_full);
+  sem_close(status_empty);
+
+  sem_unlink(SEMNAME_STATUS_MUTEX);
+  sem_unlink(SEMNAME_STATUS_FULL);
+  sem_unlink(SEMNAME_STATUS_EMPTY);
+
+  sem_close(request_queue_mutex);
+  sem_close(request_queue_full);
+  sem_close(request_queue_empty);
+
+  sem_unlink(SEMNAME_REQUEST_MUTEX);
+  sem_unlink(SEMNAME_REQUEST_FULL);
+  sem_unlink(SEMNAME_REQUEST_EMPTY);
+
+  shm_unlink(shm_name);
+}
+
+static void sigint_handler() {
+  cleanUp();
+  exit(0);
+}
+
 void initSemaphores() {
   for (int i = 0; i < N; i++) {
-    char SEMNAME_MUTEX[MAX_SHM_NAME];
-    char SEMNAME_FULL[MAX_SHM_NAME];
-    char SEMNAME_EMPTY[MAX_SHM_NAME];
     sprintf(SEMNAME_MUTEX, "%s%s%d", sem_prefix, "result_queue_mutex_", i);
     sprintf(SEMNAME_FULL, "%s%s%d", sem_prefix, "result_queue_full_", i);
     sprintf(SEMNAME_EMPTY, "%s%s%d", sem_prefix, "result_queue_empty_", i);
@@ -55,9 +104,6 @@ void initSemaphores() {
     }
   }
 
-  char SEMNAME_STATUS_MUTEX[MAX_SHM_NAME];
-  char SEMNAME_STATUS_FULL[MAX_SHM_NAME];
-  char SEMNAME_STATUS_EMPTY[MAX_SHM_NAME];
   sprintf(SEMNAME_STATUS_MUTEX, "%s%s", sem_prefix, "status_mutex");
   sprintf(SEMNAME_STATUS_FULL, "%s%s", sem_prefix, "status_full");
   sprintf(SEMNAME_STATUS_EMPTY, "%s%s", sem_prefix, "status_empty");
@@ -80,9 +126,6 @@ void initSemaphores() {
     exit (1);
   }
 
-  char SEMNAME_REQUEST_MUTEX[MAX_SHM_NAME];
-  char SEMNAME_REQUEST_FULL[MAX_SHM_NAME];
-  char SEMNAME_REQUEST_EMPTY[MAX_SHM_NAME];
   sprintf(SEMNAME_REQUEST_MUTEX, "%s%s", sem_prefix, "request_mutex");
   sprintf(SEMNAME_REQUEST_FULL, "%s%s", sem_prefix, "request_queue_full");
   sprintf(SEMNAME_REQUEST_EMPTY, "%s%s", sem_prefix, "request_queue_empty");
@@ -110,7 +153,6 @@ void *handleRequest(void *arg){
   struct request *req;
   req = (struct request *) arg;
 
-  printf("Thread is active for child: %d\n", req->index);
   FILE *fp;
   char *line = NULL;
   size_t len = 0;
@@ -157,6 +199,8 @@ void *handleRequest(void *arg){
 
 int main(int argc, char **argv) {
 
+  signal(SIGINT, sigint_handler);
+
   int fd;
   void *shm_start;
   struct stat sbuf;
@@ -173,8 +217,8 @@ int main(int argc, char **argv) {
   strcpy(input_file_name, argv[2]);
   strcpy(sem_prefix, argv[3]);
 
-  // Clean up the shared memory before starting
-  shm_unlink(shm_name);
+  // Clean up before start
+  cleanUp();
 
   // Open new shared memory
   fd = shm_open(shm_name, O_RDWR | O_CREAT, 0660);
@@ -214,10 +258,9 @@ int main(int argc, char **argv) {
         printf("thread create failed\n");
         exit(1);
       }
-
-      printf("thread created for child: %d\n", req.index);
     }
   }
 
-exit(0);
+  cleanUp();
+  exit(0);
 }
