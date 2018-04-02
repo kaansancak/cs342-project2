@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
   struct stat sbuf;
 
   pthread_t tids[N];
+  struct request t_args[N];
 
   if (argc != 4) {
     printf("Wrong number of arguments for server\n");
@@ -71,10 +72,6 @@ int main(int argc, char **argv) {
   strcpy(shm_name, argv[1]);
   strcpy(input_file_name, argv[2]);
   strcpy(sem_prefix, argv[3]);
-
-  printf("%s\n", shm_name);
-  printf("%s\n", input_file_name);
-  printf("%s\n", sem_prefix);
 
   fd = shm_open(shm_name, O_RDWR | O_CREAT, 0660);
   ftruncate(fd, SHM_SIZE);
@@ -89,6 +86,7 @@ int main(int argc, char **argv) {
     shared_data->resultQueueStatus[i] = 0;
   }
 
+  int ret;
   while (1) {
 
     // Queue is not empty, take the request and create a new thread to handle
@@ -99,8 +97,8 @@ int main(int argc, char **argv) {
       shared_data->request_queue.out = (shared_data->request_queue.out + 1) % BUFFER_SIZE;
 
       // Create a new thread to handle the request
-      int ret;
-      ret = pthread_create(&(tids[req.index]), NULL, handleRequest,(void *) &(req));
+      t_args[req.index] = req;
+      ret = pthread_create(&(tids[req.index]), NULL, handleRequest,(void *) &(t_args[req.index]));
 
       if (ret != 0) {
         printf("thread create failed\n");

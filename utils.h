@@ -10,7 +10,7 @@
 struct resultQueue {
   int in;
   int out;
-  int buffer[BUFFER_SIZE];
+  int buffer[BUFFER_SIZE + 1];
 };
 
 struct request {

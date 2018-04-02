@@ -30,10 +30,6 @@ int main(int argc, char **argv) {
   strcpy(keyword, argv[2]);
   strcpy(sem_prefix, argv[3]);
 
-  printf("%s\n", shm_name);
-  printf("%s\n", keyword);
-  printf("%s\n", sem_prefix);
-
   fd = shm_open(shm_name, O_RDWR, 0660);
   fstat(fd, &sbuf);
   sptr = mmap(NULL, sbuf.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -64,5 +60,19 @@ int main(int argc, char **argv) {
   shared_data->request_queue.in = (shared_data->request_queue.in + 1) % BUFFER_SIZE;
   printf("Request sent\n");
 
+  sleep(2);
+
+  while (1) {
+
+    if(shared_data->result_queues[index].in != shared_data->result_queues[index].out) {
+      int lineNo = shared_data->result_queues[index].buffer[shared_data->result_queues[index].out];
+      shared_data->result_queues[index].out = (shared_data->result_queues[index].out + 1) % BUFFER_SIZE;
+
+      if (lineNo == -1)
+        break;
+
+      printf("%d\n", lineNo);
+    }
+  }
 
 }
