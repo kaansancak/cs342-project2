@@ -39,8 +39,9 @@ int main(int argc, char **argv) {
   sptr = mmap(NULL, sbuf.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
   close(fd);
-
   shared_data = (struct sharedData *) sptr;
+
+  // Find an empty index in the result queues
   int index = -1;
   for (int i = 0; i < N; i++) {
     if (shared_data->resultQueueStatus[i] == 0) {
@@ -51,11 +52,9 @@ int main(int argc, char **argv) {
   }
 
   if (index == -1) {
-    perror("too many clients started");
+    printf("too many clients started");
     exit(1);
   }
-
-  printf("Found empty queue at index: %d\n", index);
 
   struct request req;
   req.index = index;

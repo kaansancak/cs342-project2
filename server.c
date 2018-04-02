@@ -9,6 +9,10 @@
 #include <unistd.h>
 #include "utils.h"
 
+void handleRequest(struct request req){
+  // TODO
+}
+
 int main(int argc, char **argv) {
 
   int fd;
@@ -48,12 +52,10 @@ int main(int argc, char **argv) {
 
   while (1) {
 
+    // Queue is not empty, take the request and create a new thread to handle
     if (shared_data->request_queue.in != shared_data->request_queue.out) {
-      printf("ENTER IF\n");
       struct request req = shared_data->request_queue.requests[shared_data->request_queue.out];
       shared_data->request_queue.out = (shared_data->request_queue.out + 1) % BUFFER_SIZE;
-
-      printf("Received request from: %d\n", req.index);
     }
   }
 
