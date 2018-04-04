@@ -71,7 +71,6 @@ static void cleanUp() {
   sem_unlink(SEMNAME_REQUEST_FULL);
   sem_unlink(SEMNAME_REQUEST_EMPTY);
 
-    // TODO close shm here
   shm_unlink(shm_name);
 }
 
