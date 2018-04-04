@@ -1,14 +1,14 @@
 200 Lines
-./server /mySharedMemory input200.txt /shm_prefix
+./server /mySharedMemory input4000.txt /shm_prefix
 
 400 Lines
-./server /mySharedMemory input400.txt /shm_prefix
+./server /mySharedMemory input8000.txt /shm_prefix
 
 600 Lines
-./server /mySharedMemory input600.txt /shm_prefix
+./server /mySharedMemory input12000.txt /shm_prefix
 
 800 Lines
-./server /mySharedMemory input800.txt /shm_prefix
+./server /mySharedMemory input16000.txt /shm_prefix
 
 1000 Lines
-./server /mySharedMemory input1000.txt /shm_prefix
+./server /mySharedMemory input20000.txt /shm_prefix
