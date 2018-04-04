@@ -132,7 +132,6 @@ int main(int argc, char **argv) {
   // Find an empty index in the result queues
   int index = -1;
 
-  sem_wait(status_empty);
   sem_wait(status_mutex);
   for (int i = 0; i < N; i++) {
     if (shared_data->resultQueueStatus[i] == 0) {
@@ -142,7 +141,6 @@ int main(int argc, char **argv) {
     }
   }
   sem_post(status_mutex);
-  sem_post(status_full);
 
   if (index == -1) {
     printf("too many clients started");
@@ -162,28 +160,24 @@ int main(int argc, char **argv) {
 
 
   while (1) {
-    if(shared_data->result_queues[index].in != shared_data->result_queues[index].out) {
-      sem_wait(result_queue_full_array[index]);
-      sem_wait(result_queue_mutex_array[index]);
-      int lineNo = shared_data->result_queues[index].buffer[shared_data->result_queues[index].out];
-      shared_data->result_queues[index].out = (shared_data->result_queues[index].out + 1) % BUFFER_SIZE;
-      sem_post(result_queue_mutex_array[index]);
-      sem_post(result_queue_empty_array[index]);
+    sem_wait(result_queue_full_array[index]);
+    sem_wait(result_queue_mutex_array[index]);
+    int lineNo = shared_data->result_queues[index].buffer[shared_data->result_queues[index].out];
+    shared_data->result_queues[index].out = (shared_data->result_queues[index].out + 1) % BUFFER_SIZE;
+    sem_post(result_queue_mutex_array[index]);
+    sem_post(result_queue_empty_array[index]);
 
-      if (lineNo == -1)
-        break;
+    if (lineNo == -1)
+      break;
 
-      printf("%d\n", lineNo);
-    }
+    printf("%d\n", lineNo);
   }
 
   // CLEAN UP
   shared_data->result_queues[index].in = 0;
   shared_data->result_queues[index].out = 0;
 
-  sem_wait(status_full);
   sem_wait(status_mutex);
   shared_data->resultQueueStatus[index] = 0;
   sem_post(status_mutex);
-  sem_post(status_empty);
 }

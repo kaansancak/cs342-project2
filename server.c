@@ -71,6 +71,7 @@ static void cleanUp() {
   sem_unlink(SEMNAME_REQUEST_FULL);
   sem_unlink(SEMNAME_REQUEST_EMPTY);
 
+    // TODO close shm here
   shm_unlink(shm_name);
 }
 
@@ -158,7 +159,7 @@ void *handleRequest(void *arg){
   size_t len = 0;
   ssize_t read;
   char fileDir[MAX_FILENAME + 1];
-  sprintf( fileDir, "./%s", input_file_name);
+  sprintf( fileDir, "%s", input_file_name);
   int lineno = 1;
 
   fp = fopen( fileDir, "r");
@@ -239,25 +240,20 @@ int main(int argc, char **argv) {
   int ret;
   while (1) {
 
-    // Queue is not empty, take the request and create a new thread to handle
-    if (shared_data->request_queue.in != shared_data->request_queue.out) {
-      // Take the request from request queue
+    sem_wait(request_queue_full);
+    sem_wait(request_queue_mutex);
+    struct request req = shared_data->request_queue.requests[shared_data->request_queue.out];
+    shared_data->request_queue.out = (shared_data->request_queue.out + 1) % BUFFER_SIZE;
+    sem_post(request_queue_mutex);
+    sem_post(request_queue_empty);
 
-      sem_wait(request_queue_full);
-      sem_wait(request_queue_mutex);
-      struct request req = shared_data->request_queue.requests[shared_data->request_queue.out];
-      shared_data->request_queue.out = (shared_data->request_queue.out + 1) % BUFFER_SIZE;
-      sem_post(request_queue_mutex);
-      sem_post(request_queue_empty);
+    // Create a new thread to handle the request
+    t_args[req.index] = req;
+    ret = pthread_create(&(tids[req.index]), NULL, handleRequest,(void *) &(t_args[req.index]));
 
-      // Create a new thread to handle the request
-      t_args[req.index] = req;
-      ret = pthread_create(&(tids[req.index]), NULL, handleRequest,(void *) &(t_args[req.index]));
-
-      if (ret != 0) {
-        printf("thread create failed\n");
-        exit(1);
-      }
+    if (ret != 0) {
+      printf("thread create failed\n");
+      exit(1);
     }
   }
 
