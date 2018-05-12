@@ -3,3 +3,5 @@
 ## Group Members
 * Sabit Gökberk Karaca
 * Kaan Sancak
+
+## GRADE: 100/100
